@@ -160,5 +160,62 @@ async def get_unhealthy_results(
         total_pages=total_pages,
         results=results
     )
+
+    from sqlalchemy import func
+
+@router.get("/stats", response_model=MonitoringStats)
+async def get_monitoring_stats(db: Session = Depends(get_db)):
+    """
+    Get statistik monitoring secara keseluruhan.
+    """
+    total_checks = db.query(MonitoringResult).count()
+    
+    if total_checks == 0:
+        return MonitoringStats(
+            total_checks=0,
+            healthy_count=0,
+            unhealthy_count=0,
+            uptime_percentage=0.0,
+            average_response_time_ms=None,
+            fastest_response_ms=None,
+            slowest_response_ms=None,
+            most_monitored_url=None
+        )
+    
+    healthy_count = db.query(MonitoringResult).filter(MonitoringResult.is_healthy == True).count()
+    unhealthy_count = total_checks - healthy_count
+    uptime_percentage = (healthy_count / total_checks) * 100
+    
+    # Average response time (exclude None values)
+    avg_response = db.query(func.avg(MonitoringResult.response_time_ms)).filter(
+        MonitoringResult.response_time_ms.isnot(None)
+    ).scalar()
+    
+    # Fastest response time
+    fastest = db.query(func.min(MonitoringResult.response_time_ms)).filter(
+        MonitoringResult.response_time_ms.isnot(None)
+    ).scalar()
+    
+    # Slowest response time
+    slowest = db.query(func.max(MonitoringResult.response_time_ms)).filter(
+        MonitoringResult.response_time_ms.isnot(None)
+    ).scalar()
+    
+    # Most monitored URL
+    most_monitored = db.query(
+        MonitoringResult.url,
+        func.count(MonitoringResult.url).label('count')
+    ).group_by(MonitoringResult.url).order_by(func.count(MonitoringResult.url).desc()).first()
+    
+    return MonitoringStats(
+        total_checks=total_checks,
+        healthy_count=healthy_count,
+        unhealthy_count=unhealthy_count,
+        uptime_percentage=round(uptime_percentage, 2),
+        average_response_time_ms=round(avg_response, 2) if avg_response else None,
+        fastest_response_ms=round(fastest, 2) if fastest else None,
+        slowest_response_ms=round(slowest, 2) if slowest else None,
+        most_monitored_url=most_monitored[0] if most_monitored else None
+    )
     
     return result

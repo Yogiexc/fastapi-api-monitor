@@ -71,3 +71,16 @@ class PaginatedMonitorResponse(BaseModel):
                 "results": []
             }
         }
+
+    class MonitoringStats(BaseModel):
+    """
+    Schema untuk statistik monitoring.
+    """
+    total_checks: int
+    healthy_count: int
+    unhealthy_count: int
+    uptime_percentage: float
+    average_response_time_ms: Optional[float]
+    fastest_response_ms: Optional[float]
+    slowest_response_ms: Optional[float]
+    most_monitored_url: Optional[str]
