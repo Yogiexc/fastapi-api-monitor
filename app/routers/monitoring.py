@@ -272,4 +272,34 @@ async def search_results_by_url(
         results=results
     )
     
+    import asyncio
+
+@router.post("/monitor/batch", response_model=BatchMonitorResponse, status_code=201)
+async def monitor_batch_urls(
+    request: BatchMonitorRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Monitor multiple URLs sekaligus (max 10 URLs).
+    
+    Request body:
+```json
+    {
+        "urls": [
+            "https://google.com",
+            "https://github.com",
+            "https://stackoverflow.com"
+        ]
+    }
+```
+    """
+    # Monitor semua URLs secara concurrent
+    tasks = [MonitorService.monitor_and_save(db, url) for url in request.urls]
+    results = await asyncio.gather(*tasks)
+    
+    return BatchMonitorResponse(
+        total_monitored=len(results),
+        results=results
+    )
+
     return result
