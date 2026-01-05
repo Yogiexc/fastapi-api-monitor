@@ -217,5 +217,24 @@ async def get_monitoring_stats(db: Session = Depends(get_db)):
         slowest_response_ms=round(slowest, 2) if slowest else None,
         most_monitored_url=most_monitored[0] if most_monitored else None
     )
+    @router.delete("/results/{result_id}", status_code=204)
+async def delete_monitoring_result(
+    result_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Delete monitoring result by ID.
+    
+    Response:
+    - 204: Successfully deleted
+    - 404: Result not found
+    """
+    result = MonitorService.get_result_by_id(db, result_id)
+    
+    if not result:
+        raise HTTPException(status_code=404, detail=f"Monitoring result with ID {result_id} not found")
+    
+    db.delete(result)
+    db.commit()
     
     return result
