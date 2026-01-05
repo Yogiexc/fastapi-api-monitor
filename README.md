@@ -364,8 +364,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
+- GitHub: [@Yogiexc](https://github.com/Yogiexc)
 
 ---
 
@@ -381,7 +380,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📸 Screenshots
 
 ### Swagger UI
-![Swagger UI](screenshot/
+![Swagger UI](screenshot/image.png
 )
 
 
