@@ -97,5 +97,68 @@ async def get_monitoring_result(
     
     if not result:
         raise HTTPException(status_code=404, detail=f"Monitoring result with ID {result_id} not found")
+
+    @router.get("/results/filter/healthy", response_model=PaginatedMonitorResponse)
+async def get_healthy_results(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+    """
+    Get hanya monitoring results yang HEALTHY.
+    """
+    total = db.query(MonitoringResult).filter(MonitoringResult.is_healthy == True).count()
+    offset = (page - 1) * page_size
+    
+    results = (
+        db.query(MonitoringResult)
+        .filter(MonitoringResult.is_healthy == True)
+        .order_by(MonitoringResult.created_at.desc())
+        .limit(page_size)
+        .offset(offset)
+        .all()
+    )
+    
+    total_pages = math.ceil(total / page_size) if total > 0 else 0
+    
+    return PaginatedMonitorResponse(
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+        results=results
+    )
+
+
+@router.get("/results/filter/unhealthy", response_model=PaginatedMonitorResponse)
+async def get_unhealthy_results(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+    """
+    Get hanya monitoring results yang UNHEALTHY.
+    """
+    total = db.query(MonitoringResult).filter(MonitoringResult.is_healthy == False).count()
+    offset = (page - 1) * page_size
+    
+    results = (
+        db.query(MonitoringResult)
+        .filter(MonitoringResult.is_healthy == False)
+        .order_by(MonitoringResult.created_at.desc())
+        .limit(page_size)
+        .offset(offset)
+        .all()
+    )
+    
+    total_pages = math.ceil(total / page_size) if total > 0 else 0
+    
+    return PaginatedMonitorResponse(
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+        results=results
+    )
     
     return result
