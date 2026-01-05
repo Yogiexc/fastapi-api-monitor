@@ -302,4 +302,42 @@ async def monitor_batch_urls(
         results=results
     )
 
+from fastapi.responses import StreamingResponse
+import json
+import io
+
+@router.get("/export/json")
+async def export_to_json(db: Session = Depends(get_db)):
+    """
+    Export semua monitoring results ke JSON file.
+    
+    Response: JSON file download
+    """
+    results = db.query(MonitoringResult).order_by(MonitoringResult.created_at.desc()).all()
+    
+    # Convert to dict
+    data = []
+    for result in results:
+        data.append({
+            "id": result.id,
+            "url": result.url,
+            "status_code": result.status_code,
+            "response_time_ms": result.response_time_ms,
+            "is_healthy": result.is_healthy,
+            "error_message": result.error_message,
+            "created_at": result.created_at.isoformat() if result.created_at else None
+        })
+    
+    # Create JSON string
+    json_str = json.dumps(data, indent=2)
+    
+    # Create file-like object
+    json_io = io.BytesIO(json_str.encode('utf-8'))
+    
+    return StreamingResponse(
+        json_io,
+        media_type="application/json",
+        headers={"Content-Disposition": "attachment; filename=monitoring_results.json"}
+    )
+
     return result
