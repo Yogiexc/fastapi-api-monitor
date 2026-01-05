@@ -236,5 +236,40 @@ async def delete_monitoring_result(
     
     db.delete(result)
     db.commit()
+
+    @router.get("/results/search", response_model=PaginatedMonitorResponse)
+async def search_results_by_url(
+    url: str = Query(..., description="URL untuk dicari (partial match)"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+    """
+    Search monitoring results berdasarkan URL (partial match).
+    
+    Example: 
+    - url="google" akan match "https://www.google.com"
+    """
+    total = db.query(MonitoringResult).filter(MonitoringResult.url.contains(url)).count()
+    offset = (page - 1) * page_size
+    
+    results = (
+        db.query(MonitoringResult)
+        .filter(MonitoringResult.url.contains(url))
+        .order_by(MonitoringResult.created_at.desc())
+        .limit(page_size)
+        .offset(offset)
+        .all()
+    )
+    
+    total_pages = math.ceil(total / page_size) if total > 0 else 0
+    
+    return PaginatedMonitorResponse(
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+        results=results
+    )
     
     return result
